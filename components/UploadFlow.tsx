@@ -28,7 +28,7 @@ export default function UploadFlow() {
       const { masterKeyRaw, serverPartRaw, clientPartRaw } = splitKey();
       const cryptoKey = await window.crypto.subtle.importKey(
         "raw",
-        masterKeyRaw,
+        masterKeyRaw as any,
         "AES-GCM",
         true,
         ["encrypt"]

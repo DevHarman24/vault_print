@@ -50,7 +50,7 @@ export async function exportKey(key: CryptoKey): Promise<string> {
 export async function importKeyFromRaw(rawArray: Uint8Array): Promise<CryptoKey> {
   return await window.crypto.subtle.importKey(
     "raw",
-    rawArray,
+    rawArray as any,
     "AES-GCM",
     true,
     ["encrypt", "decrypt"]

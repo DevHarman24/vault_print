@@ -95,13 +95,13 @@ export default function SecurePrintPage() {
         const masterKeyRaw = combineKeys(clientKeyPart, serverKeyPart);
         const cryptoKey = await window.crypto.subtle.importKey(
           "raw",
-          masterKeyRaw,
+          masterKeyRaw as any,
           "AES-GCM",
           true,
           ["decrypt"]
         );
 
-        const encryptedBuffer = base64ToBytes(verifyData.encryptedDocument).buffer;
+        const encryptedBuffer = base64ToBytes(verifyData.encryptedDocument).buffer as ArrayBuffer;
         
         // Decrypt
         const decryptedBlob = await decryptFile(encryptedBuffer, cryptoKey, iv);
