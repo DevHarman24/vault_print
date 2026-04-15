@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
+import { createClient } from '@supabase/supabase-js';
 
 export async function GET(request: Request, context: { params: Promise<{ linkId: string }> }) {
   try {
@@ -26,7 +27,6 @@ export async function GET(request: Request, context: { params: Promise<{ linkId:
       const supaUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       const supaRole = process.env.SUPABASE_SERVICE_ROLE_KEY;
       if(supaUrl && supaRole) {
-        const { createClient } = require('@supabase/supabase-js');
         const supabase = createClient(supaUrl, supaRole);
         const actualPath = printLink.fileUrl.replace('supabase://', '');
         const { data, error } = await supabase.storage.from('secure-documents').download(actualPath);

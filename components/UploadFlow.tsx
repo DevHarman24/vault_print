@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useRef } from 'react';
-import { UploadCloud, File, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { UploadCloud, File, ShieldCheck, AlertTriangle, ArrowRight, Lock } from 'lucide-react';
 import { encryptFile, splitKey, bytesToBase64 } from '@/lib/crypto';
 import { QRCodeSVG } from 'qrcode.react';
 
@@ -23,7 +23,7 @@ export default function UploadFlow() {
     if (!file) return;
     try {
       setStatus('Encrypting locally (AES-256-GCM)...');
-      setUploadProgress(10);
+      setUploadProgress(15);
       
       const { masterKeyRaw, serverPartRaw, clientPartRaw } = splitKey();
       const cryptoKey = await window.crypto.subtle.importKey(
@@ -35,7 +35,7 @@ export default function UploadFlow() {
       );
 
       const { encryptedBlob, iv } = await encryptFile(file, cryptoKey);
-      setUploadProgress(40);
+      setUploadProgress(45);
       setStatus('Uploading secure payload...');
 
       const formData = new FormData();
@@ -50,7 +50,7 @@ export default function UploadFlow() {
 
       if(!uploadData.success) throw new Error(uploadData.error);
       
-      setUploadProgress(70);
+      setUploadProgress(75);
       setStatus('Generating Secure Print Link...');
 
       const linkRes = await fetch('/api/link', {
@@ -59,7 +59,7 @@ export default function UploadFlow() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          fileId: uploadData.fileId,
+          fileId: uploadData.storagePath,
           serverKeyPart: bytesToBase64(serverPartRaw)
         })
       });
@@ -83,54 +83,68 @@ export default function UploadFlow() {
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto mt-10 p-8 glass-panel rounded-3xl relative overflow-hidden">
-      <div className="absolute -top-20 -right-20 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div className="w-full max-w-lg mx-auto glass-premium rounded-[2.5rem] relative overflow-hidden transition-all duration-500 hover:shadow-[0_0_80px_rgba(52,211,153,0.15)] group">
       
-      <div className="relative z-10 flex flex-col items-center">
-        <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mb-6 border border-white/10 shadow-xl">
-          <ShieldCheck className="w-8 h-8 text-emerald-400" />
-        </div>
-        <h2 className="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Anonymous Secure Upload</h2>
-        <p className="text-white/60 text-center mb-8 text-sm">
-          Military-grade encryption. Generate a one-time link. Self-destructs immediately upon printing.
-        </p>
+      {/* Glossy top highlight */}
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent"></div>
+
+      <div className="p-10 sm:p-12 relative z-10 flex flex-col items-center">
+        
+        {step === 1 && (
+          <div className="w-full flex justify-center mb-8">
+            <div className="w-20 h-20 bg-gradient-to-br from-emerald-500/20 to-transparent rounded-2xl flex items-center justify-center border border-emerald-500/30 shadow-[0_0_30px_rgba(52,211,153,0.2)]">
+              <Lock className="w-10 h-10 text-emerald-400 drop-shadow-[0_0_15px_rgba(52,211,153,1)]" />
+            </div>
+          </div>
+        )}
 
         {step === 1 && (
-          <div className="w-full animate-in fade-in zoom-in-95">
+          <div className="w-full text-center mb-8">
+            <h2 className="text-3xl font-extrabold mb-3 text-white tracking-tight">Vault Upload</h2>
+            <p className="text-white/50 text-sm font-medium">
+              Files are mathematically encrypted <span className="text-emerald-400/80">client-side</span> before leaving your device.
+            </p>
+          </div>
+        )}
+
+        {step === 1 && (
+          <div className="w-full animate-in fade-in zoom-in-95 duration-500">
             <div 
-              className={`border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center cursor-pointer transition-all ${file ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-white/20 hover:border-white/40 hover:bg-white/5'}`}
+              className={`border-2 border-dashed rounded-[2rem] p-12 flex flex-col items-center justify-center cursor-pointer transition-all duration-300 ${file ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_40px_rgba(52,211,153,0.15)__inset]' : 'border-white/10 hover:border-emerald-500/50 hover:bg-white/5 group-hover:border-white/20'}`}
               onClick={() => fileInputRef.current?.click()}
             >
               <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} accept="application/pdf,image/png,image/jpeg" />
               {file ? (
                 <>
-                  <File className="w-12 h-12 text-emerald-400 mb-4" />
-                  <p className="text-white font-medium text-center">{file.name}</p>
-                  <p className="text-white/40 text-sm mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  <File className="w-16 h-16 text-emerald-400 mb-4 drop-shadow-[0_0_10px_rgba(52,211,153,0.8)]" />
+                  <p className="text-white font-bold text-lg text-center tracking-tight">{file.name}</p>
+                  <p className="text-emerald-400/70 font-mono text-sm mt-2 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                 </>
               ) : (
                 <>
-                  <UploadCloud className="w-12 h-12 text-white/40 mb-4" />
-                  <p className="text-white/80 font-medium">Click or drag document to encrypt</p>
-                  <p className="text-white/40 text-xs mt-2">Only PDF, JPG, PNG allowed</p>
+                  <UploadCloud className="w-16 h-16 text-white/30 mb-6 transition-transform duration-500 group-hover:-translate-y-2 group-hover:text-emerald-400/80" />
+                  <p className="text-white/90 font-semibold text-lg">Click to select file</p>
+                  <p className="text-white/40 text-sm mt-3 font-medium tracking-wide border border-white/5 bg-white/5 px-4 py-1.5 rounded-full">PDF, JPG, PNG</p>
                 </>
               )}
             </div>
 
             {file && !uploadProgress && (
-              <button onClick={handleUpload} className="w-full mt-6 bg-emerald-500 hover:bg-emerald-600 text-black font-semibold py-3 rounded-xl transition-all">
-                Encrypt & Generate Link
+              <button onClick={handleUpload} className="w-full mt-8 bg-gradient-to-r from-emerald-400 to-cyan-500 hover:from-emerald-300 hover:to-cyan-400 text-black font-extrabold text-lg py-5 rounded-2xl transition-all shadow-[0_0_30px_rgba(52,211,153,0.4)] hover:shadow-[0_0_50px_rgba(52,211,153,0.6)] hover:-translate-y-1 flex items-center justify-center gap-2">
+                Encrypt & Generate Link <ArrowRight className="w-5 h-5" />
               </button>
             )}
 
             {uploadProgress > 0 && (
-              <div className="w-full mt-6">
-                <div className="flex justify-between text-xs text-white/60 mb-2">
-                  <span>{status}</span>
-                  <span>{uploadProgress}%</span>
+              <div className="w-full mt-10">
+                <div className="flex justify-between items-end mb-3">
+                  <span className="text-emerald-400 font-medium text-sm tracking-wide animate-pulse">{status}</span>
+                  <span className="text-white font-mono font-bold text-lg drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">{uploadProgress}%</span>
                 </div>
-                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-                  <div className="bg-emerald-500 transition-all duration-300 h-full" style={{width: `${uploadProgress}%`}}></div>
+                <div className="w-full bg-black/50 border border-white/10 rounded-full h-3 p-0.5 overflow-hidden shadow-inner">
+                  <div className="bg-gradient-to-r from-emerald-500 to-cyan-400 h-full rounded-full transition-all duration-500 ease-out shadow-[0_0_20px_rgba(52,211,153,0.8)] relative overflow-hidden" style={{width: `${uploadProgress}%`}}>
+                     <div className="absolute top-0 bottom-0 left-0 right-0 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent)] -translate-x-[100%] animate-[shimmer_1.5s_infinite]"></div>
+                  </div>
                 </div>
               </div>
             )}
@@ -138,31 +152,36 @@ export default function UploadFlow() {
         )}
 
         {step === 2 && (
-          <div className="w-full flex flex-col items-center animate-in fade-in slide-in-from-bottom-4">
-            <div className="bg-white p-4 rounded-2xl mb-6 shadow-[0_0_40px_rgba(16,185,129,0.3)]">
-              <QRCodeSVG value={generatedUrl} size={200} level="M" />
+          <div className="w-full flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <h2 className="text-3xl font-extrabold mb-8 text-white tracking-tight">Print Ready</h2>
+            
+            <div className="bg-white p-6 rounded-[2rem] mb-10 shadow-[0_0_60px_rgba(52,211,153,0.4)] border border-white border-opacity-20 transform hover:scale-105 transition-transform duration-500">
+              <QRCodeSVG value={generatedUrl} size={220} level="H" />
             </div>
             
-            <div className="w-full bg-black/40 border border-white/10 p-4 rounded-xl flex items-center justify-between mb-4 break-all">
-              <p className="text-emerald-400 text-sm font-mono leading-tight pr-4">{generatedUrl}</p>
+            <div className="w-full bg-black/60 border border-white/10 p-5 rounded-2xl flex items-center justify-between mb-8 shadow-inner backdrop-blur-md hover:border-emerald-500/30 transition-colors duration-500">
+              <p className="text-emerald-400 text-sm font-mono leading-tight pr-4 break-all truncate font-medium">{generatedUrl}</p>
               <button 
                 onClick={() => navigator.clipboard.writeText(generatedUrl)}
-                 className="shrink-0 bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-sm transition-all"
+                 className="shrink-0 bg-white/10 hover:bg-emerald-500 hover:text-black font-semibold text-white px-5 py-2.5 rounded-xl text-sm transition-all shadow-lg active:scale-95"
               >
                 Copy
               </button>
             </div>
 
-            <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl flex gap-3 text-amber-200 text-sm">
-              <AlertTriangle className="shrink-0 w-5 h-5"/>
-              <p>This link contains the decryption key. Keep it safe. It will expire in 4 hours and will permanently self-destruct immediately upon generation of the print spool.</p>
+            <div className="bg-amber-500/10 border border-amber-500/30 p-5 rounded-2xl flex gap-4 items-start text-amber-200/90 text-sm leading-relaxed shadow-[0_0_30px_rgba(245,158,11,0.1)]">
+              <AlertTriangle className="shrink-0 w-6 h-6 text-amber-400 mt-0.5 drop-shadow-[0_0_10px_rgba(245,158,11,0.8)]"/>
+              <div>
+                <strong className="block text-amber-400 mb-1 font-bold">CRITICAL SECURITY WARNING</strong>
+                This link contains the 256-bit decryption key. It cannot be recovered. It will expire in 4 hours and will permanently self-destruct upon printing.
+              </div>
             </div>
             
             <button 
               onClick={() => { setFile(null); setStep(1); setUploadProgress(0); }} 
-              className="mt-6 text-white/50 hover:text-white transition"
+              className="mt-8 text-white/40 hover:text-white font-medium transition-colors duration-300 border-b border-transparent hover:border-white/30 pb-1"
             >
-              Upload another document
+              Encrypt another document
             </button>
           </div>
         )}

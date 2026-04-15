@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
   try {
@@ -24,7 +25,6 @@ export async function POST(request: Request) {
 
     if (supaUrl && supaRole) {
       // Supabase Storage Implementation
-      const { createClient } = require('@supabase/supabase-js');
       const supabase = createClient(supaUrl, supaRole);
       
       const { data, error } = await supabase.storage
