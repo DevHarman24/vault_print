@@ -16,7 +16,7 @@ export async function encryptFile(file: File, key: CryptoKey): Promise<{ encrypt
   const encryptedContent = await window.crypto.subtle.encrypt(
     {
       name: "AES-GCM",
-      iv: iv,
+      iv: iv as any,
     },
     key,
     arrayBuffer
@@ -32,10 +32,10 @@ export async function decryptFile(encryptedBuffer: ArrayBuffer, key: CryptoKey, 
   const decryptedContent = await window.crypto.subtle.decrypt(
     {
       name: "AES-GCM",
-      iv: iv,
+      iv: iv as any,
     },
     key,
-    encryptedBuffer
+    encryptedBuffer as any
   );
 
   return new Blob([decryptedContent]);
