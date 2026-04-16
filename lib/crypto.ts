@@ -1,3 +1,5 @@
+import { PDFDocument, rgb, degrees, StandardFonts } from 'pdf-lib';
+
 export async function generateEncryptionKey(): Promise<CryptoKey> {
   return await window.crypto.subtle.generateKey(
     {
@@ -114,4 +116,32 @@ export function base64ToBytes(base64: string): Uint8Array {
     bytes[i] = binary_string.charCodeAt(i);
   }
   return bytes;
+}
+
+export async function applyPdfSecurity(pdfBuffer: ArrayBuffer, linkId: string): Promise<Blob> {
+  try {
+    const pdfDoc = await PDFDocument.load(pdfBuffer);
+    
+    // We only set the permission locking here as requested
+    // Note: Owner password is required to activate permission flags
+    const ownerPassword = Math.random().toString(36).substring(2, 15);
+    
+    const securedPdfBytes = await pdfDoc.save({
+      ownerPassword: ownerPassword,
+      permissions: {
+        printing: 'highResolution',
+        modifying: false,
+        copying: false,
+        annotating: false,
+        fillingForms: false,
+        contentAccessibility: true, // Keep accessible but locked
+        documentAssembly: false,
+      },
+    });
+
+    return new Blob([securedPdfBytes], { type: 'application/pdf' });
+  } catch (e) {
+    console.error("PDF Security failed, falling back to raw blob", e);
+    return new Blob([pdfBuffer], { type: 'application/pdf' });
+  }
 }
