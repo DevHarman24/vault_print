@@ -55,6 +55,6 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('Link Generation Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: `Link API Error: ${error.message || String(error)}` }, { status: 500 });
   }
 }

@@ -58,6 +58,6 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error('Upload Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: `Upload API Error: ${error.message || String(error)}` }, { status: 500 });
   }
 }
