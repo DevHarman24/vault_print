@@ -44,7 +44,7 @@ export async function decryptFile(encryptedBuffer: ArrayBuffer, key: CryptoKey, 
 export async function exportKey(key: CryptoKey): Promise<string> {
   const exported = await window.crypto.subtle.exportKey("raw", key);
   const exportedKeyBuffer = new Uint8Array(exported);
-  return Buffer.from(exportedKeyBuffer).toString('base64');
+  return bytesToBase64(exportedKeyBuffer);
 }
 
 export async function importKeyFromRaw(rawArray: Uint8Array): Promise<CryptoKey> {
@@ -78,10 +78,26 @@ export function combineKeys(clientPartRaw: Uint8Array, serverPartRaw: Uint8Array
 }
 
 export function bytesToBase64(bytes: Uint8Array): string {
-  return Buffer.from(bytes).toString('base64');
+  if (typeof Buffer !== 'undefined') {
+    return Buffer.from(bytes).toString('base64');
+  }
+  let binary = '';
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
 }
 
 export function base64ToBytes(base64: string): Uint8Array {
-  const buffer = Buffer.from(base64, 'base64');
-  return new Uint8Array(buffer);
+  if (typeof Buffer !== 'undefined') {
+    return new Uint8Array(Buffer.from(base64, 'base64'));
+  }
+  const binary_string = atob(base64);
+  const len = binary_string.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binary_string.charCodeAt(i);
+  }
+  return bytes;
 }
